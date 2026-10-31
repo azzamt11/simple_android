@@ -1,0 +1,15 @@
+# Local Gradle distribution and wrapper cache
+.gradle-wrapper-cache/
+
+# Gradle project outputs and local state
+.gradle/
+**/build/
+local.properties
+
+# IDE metadata
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
