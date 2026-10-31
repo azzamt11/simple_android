@@ -18,8 +18,8 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
-        android:label="@string/app_name"
-        android:theme="@style/Theme.SimpleAndroid" >
+        android:label="SimpleAndroid"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar" >
         <activity
             android:name="com.example.simpleandroid.MainActivity"
             android:exported="true" >
@@ -29,6 +29,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:exported="true" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
