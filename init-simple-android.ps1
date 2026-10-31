@@ -88,6 +88,9 @@ plugins {
     id 'com.android.application' version '8.7.3' apply false
     id 'org.jetbrains.kotlin.android' version '2.0.21' apply false
     id 'org.jetbrains.kotlin.plugin.compose' version '2.0.21' apply false
+    id 'com.google.dagger.hilt.android' version '2.51.1' apply false
+    id 'com.google.devtools.ksp' version '2.0.21-1.0.25' apply false
+    id 'org.jlleitschuh.gradle.ktlint' version '12.1.2' apply false
 }
 "@
 
@@ -119,6 +122,7 @@ set APP_HOME=%DIRNAME%
 @rem Resolve java.exe
 set "JAVA_HOME=$jdk17"
 set "JAVA_EXE=%JAVA_HOME%\bin\java.exe"
+set "GRADLE_USER_HOME=%APP_HOME%..\.gradle-user-home"
 
 set GRADLE_HOME=%APP_HOME%..\.gradle-wrapper-cache\8.11.1\gradle-8.11.1
 call "%GRADLE_HOME%\bin\gradle.bat" %*
@@ -179,6 +183,9 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'com.google.dagger.hilt.android'
+    id 'com.google.devtools.ksp'
+    id 'org.jlleitschuh.gradle.ktlint'
 }
 
 kotlin {
@@ -208,16 +215,21 @@ android {
 dependencies {
     implementation platform('androidx.compose:compose-bom:2024.12.01')
     implementation 'androidx.activity:activity-compose:1.10.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
     debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+    implementation 'com.google.dagger:hilt-android:2.51.1'
+    ksp 'com.google.dagger:hilt-compiler:2.51.1'
 }
 "@
 
 Write-ProjectFile "app/src/main/AndroidManifest.xml" @"
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+        android:name=".$($ProjectName.Replace(' ', ''))App"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:label="$ProjectName">
         <activity android:name=".$(($PackageName -split '\.')[-1] -replace '^(.)(.*)$', '$1$2')MainActivity" android:exported="true">
@@ -241,6 +253,7 @@ package $PackageName
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -250,14 +263,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val viewModel: SimpleAndroidViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Greeting()
+                    greeting(viewModel.uiState.value)
                 }
             }
         }
@@ -265,15 +282,67 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Greeting() {
+private fun greeting(message: String) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Hello, Jetpack Compose!")
+        Text(message)
     }
 }
+"@
+
+Write-ProjectFile "app/src/main/java/$packagePath/data/HomeDataSource.kt" @"
+package $PackageName.data
+
+import javax.inject.Inject
+
+class HomeDataSource @Inject constructor() {
+    fun getGreeting(): String = "Hello, Jetpack Compose!"
+}
+"@
+
+Write-ProjectFile "app/src/main/java/$packagePath/data/HomeRepository.kt" @"
+package $PackageName.data
+
+import javax.inject.Inject
+
+class HomeRepository @Inject constructor(
+    private val dataSource: HomeDataSource
+) {
+    fun getGreeting(): String = dataSource.getGreeting()
+}
+"@
+
+Write-ProjectFile "app/src/main/java/$packagePath/SimpleAndroidViewModel.kt" @"
+package $PackageName
+
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import $PackageName.data.HomeRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+@HiltViewModel
+class SimpleAndroidViewModel @Inject constructor(
+    repository: HomeRepository
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(repository.getGreeting())
+    val uiState: StateFlow<String> = _uiState.asStateFlow()
+}
+"@
+
+Write-ProjectFile "app/src/main/java/$packagePath/$($ProjectName.Replace(' ', ''))App.kt" @"
+package $PackageName
+
+import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp
+class $($ProjectName.Replace(' ', ''))App : Application()
 "@
 
 Write-ProjectFile "README.md" @"

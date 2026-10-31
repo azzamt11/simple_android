@@ -1,5 +1,6 @@
 # Local Gradle distribution and wrapper cache
 .gradle-wrapper-cache/
+.gradle-user-home/
 
 # Gradle project outputs and local state
 .gradle/
