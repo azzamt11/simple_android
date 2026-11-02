@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.material3.Button
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -24,7 +25,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    greeting(viewModel.uiState.value)
+                    greeting(
+                        message = viewModel.uiState.value,
+                        isLoggedIn = viewModel.authState.value,
+                        onLoginClick = {
+                            viewModel.login("demo@example.com", "password123")
+                        }
+                    )
                 }
             }
         }
@@ -32,12 +39,20 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun greeting(message: String) {
+private fun greeting(
+    message: String,
+    isLoggedIn: Boolean,
+    onLoginClick: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(message)
+        Button(onClick = onLoginClick) {
+            Text("Login")
+        }
+        Text(if (isLoggedIn) "Login successful" else "Not logged in")
     }
 }

@@ -138,10 +138,92 @@ the dependency direction, coroutine usage, state exposure, and behavior.
 Score:
 Comment:
 
+Evaluation: 8/10 after correction.
+The first attempt correctly added a Button, but it did not pass `authState` to
+the UI and attempted to call `toString()` on composable functions rather than
+using credential values. It also introduced email and password field stubs,
+which this lesson explicitly postponed. The corrected version observes the
+ViewModel state, sends a click event through a lambda, and uses the demo
+credentials required by the exercise.
+
 Evaluation: 10/10 after correction.
 The ViewModel now receives the `AuthRepository` abstraction, exposes a Boolean
 state, launches the suspend repository call in `viewModelScope`, and keeps the
 existing greeting behavior. The initial attempt had missing imports, declared
 state inside an invalid coroutine block, and omitted the required `login`
 function; those issues were corrected.
+
+
+====================================================================
+LESSON 3 - Connecting ViewModel state to Compose
+====================================================================
+
+Goal
+----
+Connect `SimpleAndroidViewModel.authState` to `MainActivity` and trigger a
+login from a Compose button.
+
+Why this layer exists
+---------------------
+The ViewModel owns the authentication operation and its state. Compose should
+only observe that state and display it. When the user interacts with the UI,
+Compose calls the ViewModel function instead of calling the repository
+directly.
+
+Task
+----
+Update `MainActivity.kt`:
+
+1. Read the Boolean state from the ViewModel inside `setContent`.
+2. Pass that Boolean into the composable currently named `greeting`.
+3. Keep the existing greeting text visible.
+4. Add a Material 3 `Button` below the greeting text.
+5. When the button is clicked, call:
+
+       viewModel.login("demo@example.com", "password123")
+
+6. Display one text when the auth state is `true` and another when it is
+   `false`.
+
+Clues
+------
+
+- For a Compose `StateFlow`, use its `.value` property in this project.
+- Import `Button` from `androidx.compose.material3.Button`.
+- A Button needs an `onClick` lambda and content.
+- The `greeting` composable currently accepts one `String`; you will need to
+  add a second parameter of type `Boolean`.
+- Use a simple Kotlin `if` expression to choose the authentication message.
+- Do not add text fields, navigation, or a real backend yet.
+
+Starter shape
+-------------
+This is the intended flow, not a complete answer:
+
+    setContent {
+        MaterialTheme {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                greeting(
+                    message = viewModel.uiState.value,
+                    isLoggedIn = viewModel.authState.value
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun greeting(message: String, isLoggedIn: Boolean) {
+        // Keep the existing greeting Text.
+        // Add a Button whose onClick calls viewModel.login(...).
+        // Show a login-success or login-failure Text using isLoggedIn.
+    }
+
+Submission
+----------
+Complete `MainActivity.kt`, then tell me you are ready for evaluation. I will
+check state observation, event direction, Compose structure, and behavior.
+
+--------------------------------------------------------------------
+Score:
+Comment:
 
