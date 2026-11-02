@@ -1,3 +1,5 @@
 #!/bin/sh
 APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+export JAVA_HOME='/usr/lib/jvm/java-1.17.0-openjdk-amd64'
+export GRADLE_USER_HOME="$APP_HOME/../.gradle-user-home"
 exec "$APP_HOME/../.gradle-wrapper-cache/8.11.1/gradle-8.11.1/bin/gradle" "$@"
