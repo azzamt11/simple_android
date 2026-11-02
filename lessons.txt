@@ -2,24 +2,146 @@ Learning Android Development
 ::::::::::::::::::::::::::::
 
 ====================================================================
-LESSON 1 - (you decide the title)
+LESSON 1 - Implementing the repository contract
 ====================================================================
 
-(content)
+Goal
+----
+Complete `AuthRepositoryImpl.login` without changing the public contract.
 
+Read first
+----------
+`AuthRepository` already defines this function:
+
+    suspend fun login(email: String, password: String): Boolean
+
+Your implementation should return `true` only when both values match the one
+demo account below. It should return `false` for every other combination.
+
+Demo account
+------------
+
+    email: demo@example.com
+    password: password123
+
+Clues
+-----
+
+1. Compare `email` with the demo email using `==`.
+2. Compare `password` with the demo password using `==`.
+3. Both comparisons must be true, so use Kotlin's logical AND operator.
+4. Return the resulting Boolean expression.
+5. Do not add a ViewModel, UI code, network library, or Firebase yet.
+
+Starter code
+------------
+The implementation file contains this intentional placeholder:
+
+    return TODO("Complete this lesson")
+
+Replace only that placeholder with your solution. You may introduce constants
+if you want to avoid repeating the demo strings, but keep the change inside
+`AuthRepositoryImpl`.
+
+Submission
+----------
+Complete the code in the module, then tell me you are ready for evaluation.
+I will inspect it, test the behavior, give you a score, and write a comment.
+
+
+--------------------------------------------------------------------
+Score:
+7/10
+Comment:
+The implementation correctly implements `AuthRepository`, keeps the `suspend`
+function signature, compares both parameters, and uses `&&` correctly. Hilt's
+`@Binds` setup is also unchanged and remains correct.
+
+The required demo email was `demo@example.com`, but the implementation uses
+`user@example.com`. Therefore the expected valid login would incorrectly return
+`false`. Change the email string to `demo@example.com`. The password is correct.
+
+
+====================================================================
+LESSON 2 - Injecting authentication into the ViewModel
+====================================================================
+
+Goal
+----
+Make `SimpleAndroidViewModel` depend on the abstraction `AuthRepository`, and
+add a small function that can call `login`.
+
+Why this layer exists
+---------------------
+The UI should not know how authentication works. The ViewModel receives user
+actions from the UI, calls the repository, and later will expose the result as
+UI state.
+
+Task
+----
+Update `SimpleAndroidViewModel.kt`:
+
+1. Add `AuthRepository` as a second constructor dependency.
+2. Keep the existing `HomeRepository` dependency and greeting behavior.
+3. Add a function named `login` with two `String` parameters: email and
+   password.
+4. Inside that function, call `authRepository.login(email, password)`.
+5. Because the repository function is `suspend`, call it inside
+   `viewModelScope.launch { ... }`.
+6. For this lesson, store the returned Boolean in a private
+   `MutableStateFlow<Boolean>` and expose it as a read-only `StateFlow<Boolean>`.
+7. Start the Boolean state as `false`.
+
+Clues
+------
+
+- Import `AuthRepository` from the `data.auth` package.
+- Import `viewModelScope` from `androidx.lifecycle.viewModelScope`.
+- Import `launch` from `kotlinx.coroutines.launch`.
+- The constructor parameter should use the interface type, not
+  `AuthRepositoryImpl`.
+- The assignment inside the coroutine will look conceptually like:
+
+      state = repository.login(email, password)
+
+  but a `MutableStateFlow` is updated through its `.value` property.
+
+Starter shape
+-------------
+Do not copy this as a complete answer. Use it only to understand the intended
+shape:
+
+    @HiltViewModel
+    class SimpleAndroidViewModel @Inject constructor(
+        repository: HomeRepository,
+        private val authRepository: AuthRepository
+    ) : ViewModel() {
+        // Keep the existing greeting state here.
+
+        // Add a private MutableStateFlow<Boolean> initialized to false.
+        // Expose it using asStateFlow().
+
+        fun login(email: String, password: String) {
+            // Launch a coroutine and update the Boolean state with the result.
+        }
+    }
+
+Do not change `MainActivity` yet. In the next lesson we will connect the UI to
+this ViewModel state.
+
+Submission
+----------
+Complete the ViewModel, then tell me you are ready for evaluation. I will check
+the dependency direction, coroutine usage, state exposure, and behavior.
 
 --------------------------------------------------------------------
 Score:
 Comment:
 
-
-====================================================================
-LESSON 2 - (you decide the title)
-====================================================================
-
-(content)
-
---------------------------------------------------------------------
-Score:
-Comment:
+Evaluation: 10/10 after correction.
+The ViewModel now receives the `AuthRepository` abstraction, exposes a Boolean
+state, launches the suspend repository call in `viewModelScope`, and keeps the
+existing greeting behavior. The initial attempt had missing imports, declared
+state inside an invalid coroutine block, and omitted the required `login`
+function; those issues were corrected.
 
